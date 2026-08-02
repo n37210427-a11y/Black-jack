@@ -185,15 +185,28 @@
         }
 
         #new-game-btn {
+            grid-column: span 2;
             background-color: #2196f3;
             color: white;
             box-shadow: 0 3px 0 #0b7dda;
         }
 
+        /* 잘 안 보이도록 보조형으로 수정된 리셋 버튼 스타일 */
         #reset-score-btn {
-            background-color: #e53935;
-            color: white;
-            box-shadow: 0 3px 0 #b71c1c;
+            background-color: transparent;
+            color: rgba(255, 255, 255, 0.4);
+            box-shadow: none;
+            font-size: 11px;
+            padding: 4px 8px;
+            font-weight: normal;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+            margin-top: 8px;
+        }
+
+        #reset-score-btn:active:not(:disabled) {
+            background-color: rgba(0, 0, 0, 0.2);
+            color: rgba(255, 255, 255, 0.7);
         }
 
         #message {
@@ -205,6 +218,11 @@
             display: flex;
             align-items: center;
             justify-content: center;
+        }
+
+        .footer-area {
+            display: flex;
+            justify-content: flex-end;
         }
     </style>
 </head>
@@ -242,6 +260,9 @@
             <button id="double-btn" onclick="doubleDown()" disabled>더블 다운</button>
             <button id="split-btn" onclick="split()" disabled>스플릿</button>
             <button id="new-game-btn" onclick="startNewGame()">새 게임 시작</button>
+        </div>
+
+        <div class="footer-area">
             <button id="reset-score-btn" onclick="resetScore()">점수 리셋</button>
         </div>
     </div>
@@ -256,10 +277,8 @@
     
     const BASE_BET = 100;
     
-    // 로컬 스토리지에서 저장된 점수 불러오기 (없으면 기본값 1000)
     let totalScore = parseInt(localStorage.getItem('blackjack_score')) || 1000;
 
-    // 페이지 로드 시점 점수 표시
     document.addEventListener("DOMContentLoaded", () => {
         updateScoreDisplay();
     });
@@ -345,12 +364,11 @@
 
         updateUI(true);
 
-        // 카드 순차 배분 애니메이션
         playerHands[0].cards.push(deck.pop());
         updateUI(true);
         await sleep(250);
 
-        dealerHand.push(deck.pop()); // 딜러의 가려진 카드 (첫 번째 카드)
+        dealerHand.push(deck.pop());
         updateUI(true);
         await sleep(250);
 
@@ -358,7 +376,7 @@
         updateUI(true);
         await sleep(250);
 
-        dealerHand.push(deck.pop()); // 딜러의 오픈 카드 (두 번째 카드)
+        dealerHand.push(deck.pop());
         updateUI(true);
         await sleep(250);
 
@@ -382,7 +400,6 @@
         updateButtons();
     }
 
-    // 점수 저장 및 화면 업데이트 함수
     function saveAndUpdateScore(newScore) {
         totalScore = newScore;
         localStorage.setItem('blackjack_score', totalScore);
@@ -393,9 +410,9 @@
         document.getElementById('total-score').textContent = totalScore;
     }
 
-    // 수동 점수 리셋 함수
+    // 초기화 확인 알림 텍스트 변경
     function resetScore() {
-        if (confirm("점수를 1000점으로 초기화하시겠습니까?")) {
+        if (confirm("초기화 하시겠습니까?")) {
             saveAndUpdateScore(1000);
             document.getElementById('message').textContent = '점수가 초기화되었습니다.';
         }
@@ -408,11 +425,9 @@
             dealerContainer.appendChild(createCardElement(card, hideDealerCard && index === 0));
         });
 
-        // 딜러 점수 계산 및 정확한 오픈 카드 점수 표시
         const dealerScoreSpan = document.getElementById('dealer-score');
         if (hideDealerCard) {
             if (dealerHand.length >= 2) {
-                // 첫 번째 카드가 숨겨져 있을 때 두 번째(오픈된) 카드의 수치를 보여줌
                 const openCardValue = getCardBaseValue(dealerHand[1]);
                 dealerScoreSpan.textContent = `오픈: ${openCardValue}`;
             } else {
