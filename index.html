@@ -151,6 +151,78 @@
             to { transform: rotate(360deg); }
         }
 
+        /* 튜토리얼 팝업 레이어 */
+        #tutorial-modal {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.85);
+            border-radius: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 25px 20px;
+            z-index: 20;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        #tutorial-modal.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .tutorial-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            padding-bottom: 10px;
+        }
+
+        .tutorial-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #ffeb3b;
+        }
+
+        .skip-btn {
+            background: none;
+            border: none;
+            color: #aaa;
+            font-size: 13px;
+            cursor: pointer;
+            box-shadow: none;
+            padding: 0;
+        }
+
+        .tutorial-body {
+            font-size: 14px;
+            line-height: 1.6;
+            text-align: left;
+            margin: 15px 0;
+            color: #e0e0e0;
+            flex-grow: 1;
+        }
+
+        .tutorial-body h3 {
+            font-size: 16px;
+            color: #80cbc4;
+            margin-top: 0;
+        }
+
+        .tutorial-footer {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        .tutorial-footer button {
+            flex: 1;
+            padding: 8px;
+            font-size: 13px;
+        }
+
         /* 버튼 그룹 */
         .buttons {
             display: grid;
@@ -191,7 +263,7 @@
             box-shadow: 0 3px 0 #0b7dda;
         }
 
-        /* 잘 안 보이도록 보조형으로 수정된 리셋 버튼 스타일 */
+        /* 리셋 버튼 */
         #reset-score-btn {
             background-color: transparent;
             color: rgba(255, 255, 255, 0.4);
@@ -229,6 +301,19 @@
 <body>
 
 <div class="game-container" style="position: relative;">
+    <div id="tutorial-modal">
+        <div class="tutorial-header">
+            <span class="tutorial-title" id="tut-step-title">게임 방법 (1/3)</span>
+            <button class="skip-btn" onclick="closeTutorial()">스킵 ✖</button>
+        </div>
+        <div class="tutorial-body" id="tut-step-content">
+            </div>
+        <div class="tutorial-footer">
+            <button id="tut-prev-btn" onclick="prevTutorialStep()" style="background-color: #757575; color: white;" disabled>이전</button>
+            <button id="tut-next-btn" onclick="nextTutorialStep()" style="background-color: #2196f3; color: white;">다음</button>
+        </div>
+    </div>
+
     <div id="shuffle-overlay">
         <div>
             <div class="shuffle-icon">♠️</div>
@@ -240,7 +325,7 @@
         <h1>♠️ 블랙잭 게임 ♥️</h1>
 
         <div class="score-board">
-            보유 점수: <span id="total-score">1000</span> 점
+            보유 점수: <span id="total-score">100000</span> 점
         </div>
 
         <div class="hand">
@@ -263,7 +348,7 @@
         </div>
 
         <div class="footer-area">
-            <button id="reset-score-btn" onclick="resetScore()">점수 리셋</button>
+            <button id="reset-score-btn" onclick="resetScore()">초기화</button>
         </div>
     </div>
 </div>
@@ -275,13 +360,98 @@
     let activeHandIndex = 0;
     let isGameOver = true;
     
-    const BASE_BET = 100;
-    
-    let totalScore = parseInt(localStorage.getItem('blackjack_score')) || 1000;
+    const BASE_BET = 10000;
+    let totalScore = parseInt(localStorage.getItem('blackjack_score')) || 100000;
+
+    // 튜토리얼 데이터
+    let currentTutorialStep = 0;
+    const tutorialSteps = [
+        {
+            title: "기본 규칙 (1/3)",
+            content: `
+                <h3>🎯 게임의 목표</h3>
+                카드의 합을 <b>21에 가장 가깝게</b> 만드는 것입니다.<br>
+                21을 초과하면 버스트(패배)됩니다.<br><br>
+                <h3>🃏 카드 계산법</h3>
+                • <b>2~10</b>: 숫자 그대로<br>
+                • <b>J, Q, K</b>: 10점<br>
+                • <b>A (에이스)</b>: 1점 또는 11점 (유리한 쪽으로 자동 계산)
+            `
+        },
+        {
+            title: "플레이어의 선택 (2/3)",
+            content: `
+                <h3>🕹 주요 버튼 설명</h3>
+                • <b>히트 (Hit)</b>: 카드를 1장 더 받습니다.<br>
+                • <b>스탠드 (Stand)</b>: 카드를 그만 받고 결과를 비교합니다.<br>
+                • <b>더블 다운</b>: 배팅금을 2배로 늘리고 카드를 단 1장만 더 받습니다.<br>
+                • <b>스플릿</b>: 처음에 같은 숫자가 나오면 2개의 손으로 나누어 플레이합니다.
+            `
+        },
+        {
+            title: "딜러의 룰 & 게임 승패 (3/3)",
+            content: `
+                <h3>🤖 딜러의 규칙</h3>
+                • 딜러는 카드의 합이 <b>17점 이상이 될 때까지 무조건</b> 카드를 추가로 뽑아야 합니다.<br><br>
+                <h3>🏆 승리 조건</h3>
+                딜러보다 21에 가깝거나, 딜러가 21을 초과(버스트)하면 승리합니다!
+            `
+        }
+    ];
 
     document.addEventListener("DOMContentLoaded", () => {
         updateScoreDisplay();
+        
+        // 처음 접속하거나 이전에 튜토리얼을 본 적이 없으면 자동으로 켬
+        if (!localStorage.getItem('blackjack_tutorial_seen')) {
+            openTutorial();
+        }
     });
+
+    // 튜토리얼 제어 함수들
+    function openTutorial() {
+        currentTutorialStep = 0;
+        updateTutorialUI();
+        document.getElementById('tutorial-modal').classList.add('active');
+    }
+
+    function closeTutorial() {
+        document.getElementById('tutorial-modal').classList.remove('active');
+        localStorage.setItem('blackjack_tutorial_seen', 'true');
+    }
+
+    function updateTutorialUI() {
+        const step = tutorialSteps[currentTutorialStep];
+        document.getElementById('tut-step-title').textContent = step.title;
+        document.getElementById('tut-step-content').innerHTML = step.content;
+
+        document.getElementById('tut-prev-btn').disabled = (currentTutorialStep === 0);
+        
+        const nextBtn = document.getElementById('tut-next-btn');
+        if (currentTutorialStep === tutorialSteps.length - 1) {
+            nextBtn.textContent = "시작하기";
+            nextBtn.style.backgroundColor = "#4caf50";
+        } else {
+            nextBtn.textContent = "다음";
+            nextBtn.style.backgroundColor = "#2196f3";
+        }
+    }
+
+    function nextTutorialStep() {
+        if (currentTutorialStep < tutorialSteps.length - 1) {
+            currentTutorialStep++;
+            updateTutorialUI();
+        } else {
+            closeTutorial();
+        }
+    }
+
+    function prevTutorialStep() {
+        if (currentTutorialStep > 0) {
+            currentTutorialStep--;
+            updateTutorialUI();
+        }
+    }
 
     function createDeck() {
         const suits = ['♠', '♥', '♦', '♣'];
@@ -343,8 +513,8 @@
 
     async function startNewGame() {
         if (totalScore < BASE_BET) {
-            document.getElementById('message').textContent = '점수가 부족합니다! 점수가 1000점으로 리셋됩니다.';
-            saveAndUpdateScore(1000);
+            document.getElementById('message').textContent = '점수가 부족합니다! 100000점으로 리셋됩니다.';
+            saveAndUpdateScore(100000);
             return;
         }
 
@@ -389,10 +559,10 @@
             } else if (playerScore === 21) {
                 const reward = Math.floor(BASE_BET * 1.5);
                 saveAndUpdateScore(totalScore + reward);
-                endGame(`내츄럴 블랙잭 승리! 🎉 (+${reward}점)`);
+                endGame(`내츄럴 블랙잭 승리! 🎉 (+${reward.toLocaleString()}점)`);
             } else {
                 saveAndUpdateScore(totalScore - BASE_BET);
-                endGame(`딜러 블랙잭! 패배 하셨습니다 (-${BASE_BET}점)`);
+                endGame(`딜러 블랙잭! 패배 하셨습니다 (-${BASE_BET.toLocaleString()}점)`);
             }
             return;
         }
@@ -407,14 +577,15 @@
     }
 
     function updateScoreDisplay() {
-        document.getElementById('total-score').textContent = totalScore;
+        document.getElementById('total-score').textContent = totalScore.toLocaleString();
     }
 
-    // 초기화 확인 알림 텍스트 변경
     function resetScore() {
         if (confirm("초기화 하시겠습니까?")) {
-            saveAndUpdateScore(1000);
+            saveAndUpdateScore(100000);
             document.getElementById('message').textContent = '점수가 초기화되었습니다.';
+            // 초기화 시 튜토리얼 팝업 다시 실행
+            openTutorial();
         }
     }
 
@@ -450,7 +621,7 @@
 
             const title = document.createElement('h2');
             const handLabel = playerHands.length > 1 ? `Hand ${index + 1}` : '플레이어';
-            title.innerHTML = `${handLabel} (<span>${calculateScore(handObj.cards)}</span>) - [${handObj.betScore}점]`;
+            title.innerHTML = `${handLabel} (<span>${calculateScore(handObj.cards)}</span>) - [${handObj.betScore.toLocaleString()}점]`;
             
             const cardsDiv = document.createElement('div');
             cardsDiv.className = 'cards';
@@ -578,16 +749,16 @@
 
             if (playerScore > 21) {
                 saveAndUpdateScore(totalScore - bet);
-                resultMessages.push(`${handLabel}버스트! 패배 (-${bet}점)`);
+                resultMessages.push(`${handLabel}버스트! 패배 (-${bet.toLocaleString()}점)`);
             } else if (dealerScore > 21) {
                 saveAndUpdateScore(totalScore + bet);
-                resultMessages.push(`${handLabel}딜러 버스트! 승리 🎉 (+${bet}점)`);
+                resultMessages.push(`${handLabel}딜러 버스트! 승리 🎉 (+${bet.toLocaleString()}점)`);
             } else if (playerScore > dealerScore) {
                 saveAndUpdateScore(totalScore + bet);
-                resultMessages.push(`${handLabel}승리 🎉 (+${bet}점)`);
+                resultMessages.push(`${handLabel}승리 🎉 (+${bet.toLocaleString()}점)`);
             } else if (playerScore < dealerScore) {
                 saveAndUpdateScore(totalScore - bet);
-                resultMessages.push(`${handLabel}패배 (-${bet}점)`);
+                resultMessages.push(`${handLabel}패배 (-${bet.toLocaleString()}점)`);
             } else {
                 resultMessages.push(`${handLabel}무승부 (Push) (+0점)`);
             }
