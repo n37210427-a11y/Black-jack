@@ -241,7 +241,7 @@
             background-color: #ffb300;
             color: #222;
             box-shadow: 0 3px 0 #c78200;
-            transition: transform 0.1s;
+            transition: transform 0.1s, background-color 0.2s;
         }
 
         button:active:not(:disabled) {
@@ -256,11 +256,18 @@
             cursor: not-allowed;
         }
 
-        #new-game-btn {
+        /* 메인액션 버튼 (새 게임 시작 / 완료) */
+        #action-btn {
             grid-column: span 2;
             background-color: #2196f3;
             color: white;
             box-shadow: 0 3px 0 #0b7dda;
+        }
+
+        /* 완료 상태일 때 버튼 색상 */
+        #action-btn.finish-mode {
+            background-color: #4caf50;
+            box-shadow: 0 3px 0 #2e7d32;
         }
 
         /* 리셋 버튼 */
@@ -306,8 +313,7 @@
             <span class="tutorial-title" id="tut-step-title">게임 방법 (1/3)</span>
             <button class="skip-btn" onclick="closeTutorial()">스킵 ✖</button>
         </div>
-        <div class="tutorial-body" id="tut-step-content">
-            </div>
+        <div class="tutorial-body" id="tut-step-content"></div>
         <div class="tutorial-footer">
             <button id="tut-prev-btn" onclick="prevTutorialStep()" style="background-color: #757575; color: white;" disabled>이전</button>
             <button id="tut-next-btn" onclick="nextTutorialStep()" style="background-color: #2196f3; color: white;">다음</button>
@@ -344,7 +350,7 @@
             <button id="stand-btn" onclick="stand()" disabled>스탠드 (Stand)</button>
             <button id="double-btn" onclick="doubleDown()" disabled>더블 다운</button>
             <button id="split-btn" onclick="split()" disabled>스플릿</button>
-            <button id="new-game-btn" onclick="startNewGame()">새 게임 시작</button>
+            <button id="action-btn" onclick="handleMainAction()">새 게임 시작</button>
         </div>
 
         <div class="footer-area">
@@ -359,6 +365,7 @@
     let playerHands = [];
     let activeHandIndex = 0;
     let isGameOver = true;
+    let isAwaitingFinish = false; // 완료 버튼 대기 상태 플래그
     
     const BASE_BET = 10000;
     let totalScore = parseInt(localStorage.getItem('blackjack_score')) || 100000;
@@ -401,14 +408,11 @@
 
     document.addEventListener("DOMContentLoaded", () => {
         updateScoreDisplay();
-        
-        // 처음 접속하거나 이전에 튜토리얼을 본 적이 없으면 자동으로 켬
         if (!localStorage.getItem('blackjack_tutorial_seen')) {
             openTutorial();
         }
     });
 
-    // 튜토리얼 제어 함수들
     function openTutorial() {
         currentTutorialStep = 0;
         updateTutorialUI();
@@ -450,6 +454,21 @@
         if (currentTutorialStep > 0) {
             currentTutorialStep--;
             updateTutorialUI();
+        }
+    }
+
+    // 메인 액션 버튼(새 게임 / 완료) 클릭 시 처리
+    function handleMainAction() {
+        if (isAwaitingFinish) {
+            // [완료] 상태에서 누른 경우 -> [새 게임 시작] 상태로 전환
+            isAwaitingFinish = false;
+            const actionBtn = document.getElementById('action-btn');
+            actionBtn.textContent = "새 게임 시작";
+            actionBtn.classList.remove('finish-mode');
+            actionBtn.disabled = false;
+        } else {
+            // [새 게임 시작] 상태에서 누른 경우 -> 게임 시작
+            startNewGame();
         }
     }
 
@@ -531,6 +550,7 @@
         playerHands = [{ cards: [], betScore: BASE_BET }];
         activeHandIndex = 0;
         isGameOver = false;
+        isAwaitingFinish = false;
 
         updateUI(true);
 
@@ -584,7 +604,15 @@
         if (confirm("초기화 하시겠습니까?")) {
             saveAndUpdateScore(100000);
             document.getElementById('message').textContent = '점수가 초기화되었습니다.';
-            // 초기화 시 튜토리얼 팝업 다시 실행
+            
+            // 초기화 시 버튼 상태 리셋
+            isGameOver = true;
+            isAwaitingFinish = false;
+            const actionBtn = document.getElementById('action-btn');
+            actionBtn.textContent = "새 게임 시작";
+            actionBtn.classList.remove('finish-mode');
+            actionBtn.disabled = false;
+
             openTutorial();
         }
     }
@@ -638,23 +666,35 @@
         document.getElementById('stand-btn').disabled = true;
         document.getElementById('double-btn').disabled = true;
         document.getElementById('split-btn').disabled = true;
-        document.getElementById('new-game-btn').disabled = true;
+        document.getElementById('action-btn').disabled = true;
     }
 
     function updateButtons() {
-        document.getElementById('new-game-btn').disabled = false;
+        const actionBtn = document.getElementById('action-btn');
 
         if (isGameOver) {
             disableAllButtons();
-            document.getElementById('new-game-btn').disabled = false;
+            
+            if (isAwaitingFinish) {
+                // 한 판이 끝나 완료 버튼을 기다리는 상태
+                actionBtn.textContent = "완료";
+                actionBtn.classList.add('finish-mode');
+                actionBtn.disabled = false;
+            } else {
+                // 완료 후 다시 새 게임을 시작 가능한 상태
+                actionBtn.textContent = "새 게임 시작";
+                actionBtn.classList.remove('finish-mode');
+                actionBtn.disabled = false;
+            }
             return;
         }
 
+        // 게임 진행 중일 때는 새 게임 시작 버튼 비활성화
+        actionBtn.disabled = true;
+
         const currentHandObj = playerHands[activeHandIndex];
-        
         document.getElementById('hit-btn').disabled = false;
         document.getElementById('stand-btn').disabled = false;
-
         document.getElementById('double-btn').disabled = currentHandObj.cards.length !== 2;
 
         const canSplit = playerHands.length === 1 &&
@@ -672,7 +712,6 @@
         updateUI(true);
 
         const score = calculateScore(currentHandObj.cards);
-        
         if (score > 21) {
             nextTurn();
         } else {
@@ -687,7 +726,6 @@
         currentHandObj.betScore *= 2;
         currentHandObj.cards.push(deck.pop());
         updateUI(true);
-        
         nextTurn();
     }
 
@@ -695,7 +733,6 @@
         if (isGameOver || playerHands.length !== 1) return;
 
         const originalHandObj = playerHands[0];
-        
         playerHands = [
             { cards: [originalHandObj.cards[0], deck.pop()], betScore: originalHandObj.betScore },
             { cards: [originalHandObj.cards[1], deck.pop()], betScore: originalHandObj.betScore }
@@ -769,6 +806,7 @@
 
     function endGame(message) {
         isGameOver = true;
+        isAwaitingFinish = true; // 게임 종료 후 '완료' 버튼 모드로 진입
         updateButtons();
         document.getElementById('message').innerHTML = message;
         updateUI(false);
