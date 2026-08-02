@@ -26,7 +26,7 @@
         /* 모바일 모드 레이아웃 */
         .game-container {
             width: 100%;
-            max-width: 430px; /* 스마트폰 기본 비율 너비 */
+            max-width: 430px;
             background-color: #2e7d32;
             padding: 15px;
             border-radius: 20px;
@@ -59,7 +59,7 @@
             font-size: 18px;
         }
 
-        /* 손(Hand) 영역 모바일 최적화 */
+        /* 손(Hand) 영역 */
         .hand {
             margin: 5px 0;
             min-height: 105px;
@@ -99,8 +99,6 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            
-            /* 카드 애니메이션 */
             animation: dealCard 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
         }
 
@@ -108,7 +106,6 @@
             color: #d32f2f;
         }
 
-        /* 덱에서 분배될 때 튀어나오는 키프레임 */
         @keyframes dealCard {
             0% {
                 opacity: 0;
@@ -120,7 +117,7 @@
             }
         }
 
-        /* 셔플 안내 및 애니메이션 모달 */
+        /* 셔플 안내 모달 */
         #shuffle-overlay {
             position: absolute;
             top: 0; left: 0; right: 0; bottom: 0;
@@ -154,7 +151,7 @@
             to { transform: rotate(360deg); }
         }
 
-        /* 터치 버튼 그룹 모바일 배치 */
+        /* 버튼 그룹 */
         .buttons {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
@@ -188,10 +185,15 @@
         }
 
         #new-game-btn {
-            grid-column: span 2;
             background-color: #2196f3;
             color: white;
             box-shadow: 0 3px 0 #0b7dda;
+        }
+
+        #reset-score-btn {
+            background-color: #e53935;
+            color: white;
+            box-shadow: 0 3px 0 #b71c1c;
         }
 
         #message {
@@ -240,6 +242,7 @@
             <button id="double-btn" onclick="doubleDown()" disabled>더블 다운</button>
             <button id="split-btn" onclick="split()" disabled>스플릿</button>
             <button id="new-game-btn" onclick="startNewGame()">새 게임 시작</button>
+            <button id="reset-score-btn" onclick="resetScore()">점수 리셋</button>
         </div>
     </div>
 </div>
@@ -251,8 +254,15 @@
     let activeHandIndex = 0;
     let isGameOver = true;
     
-    let totalScore = 1000;
     const BASE_BET = 100;
+    
+    // 로컬 스토리지에서 저장된 점수 불러오기 (없으면 기본값 1000)
+    let totalScore = parseInt(localStorage.getItem('blackjack_score')) || 1000;
+
+    // 페이지 로드 시점 점수 표시
+    document.addEventListener("DOMContentLoaded", () => {
+        updateScoreDisplay();
+    });
 
     function createDeck() {
         const suits = ['♠', '♥', '♦', '♣'];
@@ -310,22 +320,18 @@
         return cardElement;
     }
 
-    // 딜레이 처리를 위한 비동기 함수 지원
     const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
-    // 게임 시작 (카드 나눠주기 비동기 애니메이션 포함)
     async function startNewGame() {
         if (totalScore < BASE_BET) {
-            document.getElementById('message').textContent = '점수 부족! 1000점으로 리셋됩니다.';
-            totalScore = 1000;
-            updateScoreDisplay();
+            document.getElementById('message').textContent = '점수가 부족합니다! 점수가 1000점으로 리셋됩니다.';
+            saveAndUpdateScore(1000);
             return;
         }
 
         disableAllButtons();
         document.getElementById('message').textContent = '';
 
-        // 카드 섞는 모달 연출
         const overlay = document.getElementById('shuffle-overlay');
         overlay.classList.add('active');
         await sleep(800);
@@ -339,12 +345,12 @@
 
         updateUI(true);
 
-        // 한 장씩 착착 나누는 연출 (딜레이)
+        // 카드 순차 배분 애니메이션
         playerHands[0].cards.push(deck.pop());
         updateUI(true);
         await sleep(250);
 
-        dealerHand.push(deck.pop());
+        dealerHand.push(deck.pop()); // 딜러의 가려진 카드 (첫 번째 카드)
         updateUI(true);
         await sleep(250);
 
@@ -352,7 +358,7 @@
         updateUI(true);
         await sleep(250);
 
-        dealerHand.push(deck.pop());
+        dealerHand.push(deck.pop()); // 딜러의 오픈 카드 (두 번째 카드)
         updateUI(true);
         await sleep(250);
 
@@ -364,21 +370,35 @@
                 endGame('양쪽 무승부 내츄럴 블랙잭! (+0점)');
             } else if (playerScore === 21) {
                 const reward = Math.floor(BASE_BET * 1.5);
-                totalScore += reward;
+                saveAndUpdateScore(totalScore + reward);
                 endGame(`내츄럴 블랙잭 승리! 🎉 (+${reward}점)`);
             } else {
-                totalScore -= BASE_BET;
+                saveAndUpdateScore(totalScore - BASE_BET);
                 endGame(`딜러 블랙잭! 패배 하셨습니다 (-${BASE_BET}점)`);
             }
-            updateScoreDisplay();
             return;
         }
 
         updateButtons();
     }
 
+    // 점수 저장 및 화면 업데이트 함수
+    function saveAndUpdateScore(newScore) {
+        totalScore = newScore;
+        localStorage.setItem('blackjack_score', totalScore);
+        updateScoreDisplay();
+    }
+
     function updateScoreDisplay() {
         document.getElementById('total-score').textContent = totalScore;
+    }
+
+    // 수동 점수 리셋 함수
+    function resetScore() {
+        if (confirm("점수를 1000점으로 초기화하시겠습니까?")) {
+            saveAndUpdateScore(1000);
+            document.getElementById('message').textContent = '점수가 초기화되었습니다.';
+        }
     }
 
     function updateUI(hideDealerCard = false) {
@@ -388,7 +408,19 @@
             dealerContainer.appendChild(createCardElement(card, hideDealerCard && index === 0));
         });
 
-        document.getElementById('dealer-score').textContent = hideDealerCard ? '?' : calculateScore(dealerHand);
+        // 딜러 점수 계산 및 정확한 오픈 카드 점수 표시
+        const dealerScoreSpan = document.getElementById('dealer-score');
+        if (hideDealerCard) {
+            if (dealerHand.length >= 2) {
+                // 첫 번째 카드가 숨겨져 있을 때 두 번째(오픈된) 카드의 수치를 보여줌
+                const openCardValue = getCardBaseValue(dealerHand[1]);
+                dealerScoreSpan.textContent = `오픈: ${openCardValue}`;
+            } else {
+                dealerScoreSpan.textContent = '?';
+            }
+        } else {
+            dealerScoreSpan.textContent = calculateScore(dealerHand);
+        }
 
         const playerContainer = document.getElementById('player-hands-container');
         playerContainer.innerHTML = '';
@@ -530,23 +562,22 @@
             const bet = handObj.betScore;
 
             if (playerScore > 21) {
-                totalScore -= bet;
+                saveAndUpdateScore(totalScore - bet);
                 resultMessages.push(`${handLabel}버스트! 패배 (-${bet}점)`);
             } else if (dealerScore > 21) {
-                totalScore += bet;
+                saveAndUpdateScore(totalScore + bet);
                 resultMessages.push(`${handLabel}딜러 버스트! 승리 🎉 (+${bet}점)`);
             } else if (playerScore > dealerScore) {
-                totalScore += bet;
+                saveAndUpdateScore(totalScore + bet);
                 resultMessages.push(`${handLabel}승리 🎉 (+${bet}점)`);
             } else if (playerScore < dealerScore) {
-                totalScore -= bet;
+                saveAndUpdateScore(totalScore - bet);
                 resultMessages.push(`${handLabel}패배 (-${bet}점)`);
             } else {
                 resultMessages.push(`${handLabel}무승부 (Push) (+0점)`);
             }
         });
 
-        updateScoreDisplay();
         endGame(resultMessages.join('<br>'));
     }
 
