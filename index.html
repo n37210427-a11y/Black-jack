@@ -23,7 +23,6 @@
             min-height: 100vh;
         }
 
-        /* 모바일 모드 레이아웃 */
         .game-container {
             width: 100%;
             max-width: 430px;
@@ -42,7 +41,6 @@
             margin: 5px 0 10px 0;
         }
 
-        /* 점수 전광판 */
         .score-board {
             background-color: #004d40;
             padding: 8px 15px;
@@ -70,7 +68,6 @@
             margin-top: 2px;
         }
 
-        /* 손(Hand) 영역 */
         .hand {
             margin: 5px 0;
             min-height: 105px;
@@ -96,7 +93,6 @@
             flex-wrap: wrap;
         }
 
-        /* 카드 기본 및 애니메이션 스타일 */
         .card {
             background-color: white;
             color: black;
@@ -128,7 +124,6 @@
             }
         }
 
-        /* 셔플 안내 모달 */
         #shuffle-overlay {
             position: absolute;
             top: 0; left: 0; right: 0; bottom: 0;
@@ -162,7 +157,6 @@
             to { transform: rotate(360deg); }
         }
 
-        /* 모달 공통 스타일 */
         .custom-modal {
             position: absolute;
             top: 0; left: 0; right: 0; bottom: 0;
@@ -234,7 +228,6 @@
             font-size: 14px;
         }
 
-        /* 버튼 그룹 */
         .buttons {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
@@ -260,7 +253,6 @@
             box-shadow: none;
         }
 
-        /* 비활성화 상태 스타일 (회색 처리) */
         button:disabled,
         #action-btn:disabled {
             background-color: #555555 !important;
@@ -269,7 +261,6 @@
             cursor: not-allowed;
         }
 
-        /* 메인액션 버튼 */
         #action-btn {
             grid-column: span 2;
             background-color: #2196f3;
@@ -282,7 +273,6 @@
             box-shadow: 0 3px 0 #2e7d32;
         }
 
-        /* 리셋 버튼 */
         #reset-score-btn {
             background-color: transparent;
             color: rgba(255, 255, 255, 0.4);
@@ -337,14 +327,14 @@
             <span class="modal-title">🏦 중앙 은행 대출</span>
         </div>
         <div class="modal-body">
-            <h3>💸 점수(자금)가 부족합니다!</h3>
-            현재 점수로는 게임에 참여할 수 없습니다.<br><br>
-            은행에서 <b>100,000점</b>을 대출하시겠습니까?<br><br>
-            <span style="color: #ff8a80;">⚠️ 대출 수수료 10%가 적용되어 <b>110,000점의 빚</b>이 등록됩니다.</span><br>
-            게임에서 승리하여 번 점수는 빚부터 우선 상환됩니다.
+            <h3>💸 자금이 부족합니다!</h3>
+            현재 자금으로는 게임에 참여할 수 없습니다.<br><br>
+            은행에서 <b>100,000원</b>을 대출하시겠습니까?<br><br>
+            <span style="color: #ff8a80;">⚠️ 대출 수수료 10%가 적용되어 <b>110,000원의 빚</b>이 등록됩니다.</span><br>
+            게임에서 승리하여 번 금액은 빚부터 우선 상환됩니다.
         </div>
         <div class="modal-footer">
-            <button onclick="takeLoan()" style="background-color: #4caf50; color: white;">100,000점 대출 받기</button>
+            <button onclick="takeLoan()" style="background-color: #4caf50; color: white;">100,000원 대출 받기</button>
         </div>
     </div>
 
@@ -359,12 +349,12 @@
         <h1>♠️ 블랙잭 게임 ♥️</h1>
 
         <div class="score-board">
-            보유 점수: <span id="total-score" class="score-val">100000</span> 점
+            보유 자금: <span id="total-score" class="score-val">100000</span> 원
             <div id="debt-container" style="display:none; margin-top:3px;">
-                대출금(빚): <span id="total-debt" class="debt-val">0</span> 점
+                대출금(빚): <span id="total-debt" class="debt-val">0</span> 원
             </div>
             <div id="penalty-badge" class="penalty-badge" style="display:none;">
-                ⚠️ 신용 재건 중 (10만 점 초과 시 초기화 가능)
+                ⚠️ 신용 재건 중 (10만 원 초과 시 초기화 가능)
             </div>
         </div>
 
@@ -407,7 +397,6 @@
 
     let totalDebt = parseInt(localStorage.getItem('blackjack_debt')) || 0;
     
-    // 신용 페널티(신용 재건 모드) 상태 플래그 저장 및 로드
     let isPenalized = localStorage.getItem('blackjack_penalized') === 'true';
 
     let currentTutorialStep = 0;
@@ -440,8 +429,8 @@
                 <h3>🤖 딜러의 규칙</h3>
                 • 딜러는 카드의 합이 <b>17점 이상이 될 때까지 무조건</b> 카드를 추가로 뽑아야 합니다.<br><br>
                 <h3>⚖️ 파산 & 신용 재건 규칙</h3>
-                빚이 있는 상태에서 초기화하면 차감된 점수로 시작하며,<br>
-                <b>자금을 10만 점 초과하여 복구할 때까지 초기화할 수 없습니다!</b>
+                빚이 있는 상태에서 초기화하면 차감된 금액으로 시작하며,<br>
+                <b>자금을 10만 원 초과하여 복구할 때까지 초기화할 수 없습니다!</b>
             `
         }
     ];
@@ -509,7 +498,7 @@
         updateScoreDisplay();
 
         document.getElementById('bank-modal').classList.remove('active');
-        document.getElementById('message').textContent = '🏦 은행에서 100,000점을 대출받았습니다! (빚 +110,000점)';
+        document.getElementById('message').textContent = '🏦 은행에서 100,000원을 대출받았습니다! (빚 +110,000원)';
     }
 
     function handleMainAction() {
@@ -626,14 +615,14 @@
 
         if (playerScore === 21 || dealerScore === 21) {
             if (playerScore === 21 && dealerScore === 21) {
-                endGame('양쪽 무승부 내츄럴 블랙잭! (+0점)');
+                endGame('양쪽 무승부 내츄럴 블랙잭! (+0원)');
             } else if (playerScore === 21) {
                 const reward = Math.floor(BASE_BET * 1.5);
                 applyScoreChange(reward);
-                endGame(`내츄럴 블랙잭 승리! 🎉 (+${reward.toLocaleString()}점)`);
+                endGame(`내츄럴 블랙잭 승리! 🎉 (+${reward.toLocaleString()}원)`);
             } else {
                 applyScoreChange(-BASE_BET);
-                endGame(`딜러 블랙잭! 패배 하셨습니다 (-${BASE_BET.toLocaleString()}점)`);
+                endGame(`딜러 블랙잭! 패배 하셨습니다 (-${BASE_BET.toLocaleString()}원)`);
             }
             return;
         }
@@ -658,7 +647,6 @@
             totalScore += amount;
         }
 
-        // 자금이 10만 점을 초과하면 신용 페널티 해제
         if (isPenalized && totalScore > 100000) {
             isPenalized = false;
         }
@@ -692,54 +680,49 @@
         }
     }
 
-    // 허점 방지 로직이 적용된 초기화 함수
     function resetScore() {
-        // 1. 이미 페널티(신용 재건) 상태일 때
         if (isPenalized) {
             if (totalScore <= 100000) {
-                alert(`⚠️ 현재 신용 재건 중입니다!\n보유 자금이 100,000점을 초과해야만 초기화할 수 있습니다.\n(현재 점수: ${totalScore.toLocaleString()}점)`);
+                alert(`⚠️ 현재 신용 재건 중입니다!\n보유 자금이 100,000원을 초과해야만 초기화할 수 있습니다.\n(현재 자금: ${totalScore.toLocaleString()}원)`);
                 return;
             } else {
-                // 10만 점 초과 시 페널티 해제 후 정상 초기화 허용
-                if (confirm("100,000점을 초과하여 신용이 회복되었습니다! 정상적으로 초기화하시겠습니까?")) {
+                if (confirm("100,000원을 초과하여 신용이 회복되었습니다! 정상적으로 초기화하시겠습니까?")) {
                     isPenalized = false;
                     totalScore = 100000;
                     totalDebt = 0;
                     saveData();
                     updateScoreDisplay();
-                    document.getElementById('message').textContent = '신용이 회복되어 100,000점으로 초기화되었습니다.';
+                    document.getElementById('message').textContent = '신용이 회복되어 100,000원으로 초기화되었습니다.';
                     resetGameState();
                 }
                 return;
             }
         }
 
-        // 2. 빚이 있는 상태에서 초기화할 때
         if (totalDebt > 0) {
             const penalty = Math.floor(totalDebt * 0.5);
             let nextStartScore = 100000 - penalty;
             
             if (nextStartScore < BASE_BET) nextStartScore = BASE_BET;
 
-            const confirmMsg = `현재 ${totalDebt.toLocaleString()}점의 빚이 있습니다!\n` +
-                               `초기화 시 빚의 50% 페널티가 적용되어 ${nextStartScore.toLocaleString()}점으로 재시작합니다.\n\n` +
-                               `⚠️ 단, 자금이 100,000점을 초과할 때까지 재초기화가 불가능합니다.\n` +
+            const confirmMsg = `현재 ${totalDebt.toLocaleString()}원의 빚이 있습니다!\n` +
+                               `초기화 시 빚의 50% 페널티가 적용되어 ${nextStartScore.toLocaleString()}원으로 재시작합니다.\n\n` +
+                               `⚠️ 단, 자금이 100,000원을 초과할 때까지 재초기화가 불가능합니다.\n` +
                                `정말 초기화 하시겠습니까?`;
 
             if (confirm(confirmMsg)) {
                 totalScore = nextStartScore;
                 totalDebt = 0;
-                isPenalized = true; // 페널티 상태 활성화
+                isPenalized = true;
 
                 saveData();
                 updateScoreDisplay();
 
-                document.getElementById('message').textContent = `페널티 적용! ${nextStartScore.toLocaleString()}점에서 시작합니다. (10만 점 초과 시 초기화 가능)`;
+                document.getElementById('message').textContent = `페널티 적용! ${nextStartScore.toLocaleString()}원에서 시작합니다. (10만 원 초과 시 초기화 가능)`;
                 resetGameState();
             }
         } else {
-            // 3. 정상 상태에서의 초기화
-            if (confirm("모든 점수를 초기화하고 100,000점에서 다시 시작하시겠습니까?")) {
+            if (confirm("모든 자금을 초기화하고 100,000원에서 다시 시작하시겠습니까?")) {
                 totalScore = 100000;
                 totalDebt = 0;
                 isPenalized = false;
@@ -747,7 +730,7 @@
                 saveData();
                 updateScoreDisplay();
 
-                document.getElementById('message').textContent = '점수가 100,000점으로 초기화되었습니다.';
+                document.getElementById('message').textContent = '자금이 100,000원으로 초기화되었습니다.';
                 resetGameState();
             }
         }
@@ -796,7 +779,7 @@
 
             const title = document.createElement('h2');
             const handLabel = playerHands.length > 1 ? `Hand ${index + 1}` : '플레이어';
-            title.innerHTML = `${handLabel} (<span>${calculateScore(handObj.cards)}</span>) - [${handObj.betScore.toLocaleString()}점]`;
+            title.innerHTML = `${handLabel} (<span>${calculateScore(handObj.cards)}</span>) - [${handObj.betScore.toLocaleString()}원]`;
             
             const cardsDiv = document.createElement('div');
             cardsDiv.className = 'cards';
@@ -839,7 +822,9 @@
         const currentHandObj = playerHands[activeHandIndex];
         document.getElementById('hit-btn').disabled = false;
         document.getElementById('stand-btn').disabled = false;
-        document.getElementById('double-btn').disabled = currentHandObj.cards.length !== 2;
+
+        const canDouble = currentHandObj.cards.length === 2 && totalScore >= currentHandObj.betScore;
+        document.getElementById('double-btn').disabled = !canDouble;
 
         const canSplit = playerHands.length === 1 &&
                          currentHandObj.cards.length === 2 &&
@@ -867,6 +852,12 @@
         if (isGameOver) return;
 
         const currentHandObj = playerHands[activeHandIndex];
+
+        if (totalScore < currentHandObj.betScore) {
+            alert("보유 자금이 부족하여 더블 다운을 할 수 없습니다!");
+            return;
+        }
+
         currentHandObj.betScore *= 2;
         currentHandObj.cards.push(deck.pop());
         updateUI(true);
@@ -930,18 +921,18 @@
 
             if (playerScore > 21) {
                 applyScoreChange(-bet);
-                resultMessages.push(`${handLabel}버스트! 패배 (-${bet.toLocaleString()}점)`);
+                resultMessages.push(`${handLabel}버스트! 패배 (-${bet.toLocaleString()}원)`);
             } else if (dealerScore > 21) {
                 applyScoreChange(bet);
-                resultMessages.push(`${handLabel}딜러 버스트! 승리 🎉 (+${bet.toLocaleString()}점)`);
+                resultMessages.push(`${handLabel}딜러 버스트! 승리 🎉 (+${bet.toLocaleString()}원)`);
             } else if (playerScore > dealerScore) {
                 applyScoreChange(bet);
-                resultMessages.push(`${handLabel}승리 🎉 (+${bet.toLocaleString()}점)`);
+                resultMessages.push(`${handLabel}승리 🎉 (+${bet.toLocaleString()}원)`);
             } else if (playerScore < dealerScore) {
                 applyScoreChange(-bet);
-                resultMessages.push(`${handLabel}패배 (-${bet.toLocaleString()}점)`);
+                resultMessages.push(`${handLabel}패배 (-${bet.toLocaleString()}원)`);
             } else {
-                resultMessages.push(`${handLabel}무승부 (Push) (+0점)`);
+                resultMessages.push(`${handLabel}무승부 (Push) (+0원)`);
             }
         });
 
