@@ -249,10 +249,12 @@
             box-shadow: none;
         }
 
-        button:disabled {
-            background-color: #666;
-            color: #aaa;
-            box-shadow: none;
+        /* 비활성화 상태 스타일 (회색 처리) */
+        button:disabled,
+        #action-btn:disabled {
+            background-color: #555555 !important;
+            color: #888888 !important;
+            box-shadow: none !important;
             cursor: not-allowed;
         }
 
@@ -365,12 +367,11 @@
     let playerHands = [];
     let activeHandIndex = 0;
     let isGameOver = true;
-    let isAwaitingFinish = false; // 완료 버튼 대기 상태 플래그
+    let isAwaitingFinish = false;
     
     const BASE_BET = 10000;
     let totalScore = parseInt(localStorage.getItem('blackjack_score')) || 100000;
 
-    // 튜토리얼 데이터
     let currentTutorialStep = 0;
     const tutorialSteps = [
         {
@@ -457,17 +458,14 @@
         }
     }
 
-    // 메인 액션 버튼(새 게임 / 완료) 클릭 시 처리
     function handleMainAction() {
         if (isAwaitingFinish) {
-            // [완료] 상태에서 누른 경우 -> [새 게임 시작] 상태로 전환
             isAwaitingFinish = false;
             const actionBtn = document.getElementById('action-btn');
             actionBtn.textContent = "새 게임 시작";
             actionBtn.classList.remove('finish-mode');
             actionBtn.disabled = false;
         } else {
-            // [새 게임 시작] 상태에서 누른 경우 -> 게임 시작
             startNewGame();
         }
     }
@@ -605,7 +603,6 @@
             saveAndUpdateScore(100000);
             document.getElementById('message').textContent = '점수가 초기화되었습니다.';
             
-            // 초기화 시 버튼 상태 리셋
             isGameOver = true;
             isAwaitingFinish = false;
             const actionBtn = document.getElementById('action-btn');
@@ -676,12 +673,10 @@
             disableAllButtons();
             
             if (isAwaitingFinish) {
-                // 한 판이 끝나 완료 버튼을 기다리는 상태
                 actionBtn.textContent = "완료";
                 actionBtn.classList.add('finish-mode');
                 actionBtn.disabled = false;
             } else {
-                // 완료 후 다시 새 게임을 시작 가능한 상태
                 actionBtn.textContent = "새 게임 시작";
                 actionBtn.classList.remove('finish-mode');
                 actionBtn.disabled = false;
@@ -689,7 +684,6 @@
             return;
         }
 
-        // 게임 진행 중일 때는 새 게임 시작 버튼 비활성화
         actionBtn.disabled = true;
 
         const currentHandObj = playerHands[activeHandIndex];
@@ -806,7 +800,7 @@
 
     function endGame(message) {
         isGameOver = true;
-        isAwaitingFinish = true; // 게임 종료 후 '완료' 버튼 모드로 진입
+        isAwaitingFinish = true;
         updateButtons();
         document.getElementById('message').innerHTML = message;
         updateUI(false);
